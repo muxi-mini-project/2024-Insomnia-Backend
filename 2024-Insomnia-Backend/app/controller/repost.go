@@ -36,6 +36,7 @@ func (r *RePost) CreateRePost(c *gin.Context) {
 		CreatedAt: repost.CreatedAt.Format("2006-01-02 15:04"),
 		TUuid:     repost.TUuid,
 		UuId:      repost.Uuid,
+		PUuid:     repost.PUuid,
 		Likes:     repost.Likes,
 		Body:      repost.Body,
 		RUuid:     repost.RUuid,
@@ -61,7 +62,9 @@ func (r *RePost) ReadRePost(c *gin.Context) {
 	}
 
 	//获取点赞状态
-	exist, err := models.CheckLike(repost.PUuid, repost.Uuid)
+	Uuid, _ := c.Get("Uuid")
+	uuid := Uuid.(string)
+	exist, err := models.CheckLike(repost.RUuid, uuid)
 	if err != nil {
 		return
 	}
@@ -70,9 +73,10 @@ func (r *RePost) ReadRePost(c *gin.Context) {
 		CreatedAt: repost.CreatedAt.Format("2006-01-02 15:04"),
 		TUuid:     repost.TUuid,
 		UuId:      repost.Uuid,
+		PUuid:     repost.PUuid,
+		RUuid:     repost.RUuid,
 		Likes:     repost.Likes,
 		Body:      repost.Body,
-		RUuid:     repost.RUuid,
 		Exist:     strconv.FormatBool(exist),
 	}
 	response.FailMsgData(c, "获取re回复成功", rsp)
@@ -123,6 +127,7 @@ func (r *RePost) GetRePosts(c *gin.Context) {
 			CreatedAt: repost.CreatedAt.Format("2006-01-02 15:04"),
 			TUuid:     repost.TUuid,
 			UuId:      repost.Uuid,
+			PUuid:     repost.PUuid,
 			Likes:     repost.Likes,
 			Body:      repost.Body,
 			RUuid:     repost.RUuid,
@@ -134,7 +139,7 @@ func (r *RePost) GetRePosts(c *gin.Context) {
 	return
 }
 
-func (r *RePost) LikePost(c *gin.Context) {
+func (r *RePost) LikeRePost(c *gin.Context) {
 	//定义一个创建帖子请求的结构体
 	req := &request.LikesReq{}
 	//使用ShouldBind去解析获得的结构体,蛙趣真清晰啊
@@ -147,7 +152,7 @@ func (r *RePost) LikePost(c *gin.Context) {
 	uuid := Uuid.(string)
 
 	//切换点赞状态
-	exist, err := postService.LikePosts(req.Uid, uuid)
+	exist, err := repostService.LikeRePosts(req.Uid, uuid)
 	if err != nil {
 		response.FailMsgData(c, fmt.Sprintf("点赞切换失败:%v", err), response.LikesResponse{})
 		return

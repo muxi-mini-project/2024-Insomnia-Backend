@@ -59,6 +59,8 @@ func (t *ThreadService) GetMyThreads(UuId string) ([]models.Thread, error) {
 func (t *ThreadService) LikeThreads(tUuid string, uuid string) (exist bool, err error) {
 	// 开始事务
 	tx := models.Db.Begin()
+	defer tx.Commit()
+
 	exist, err = models.ChangeLike(tUuid, uuid)
 	//检查是否出错
 	if err != nil {
@@ -66,6 +68,7 @@ func (t *ThreadService) LikeThreads(tUuid string, uuid string) (exist bool, err 
 		tx.Rollback()
 		return
 	}
+
 	//根据改变后的点赞类型自动增减
 	err = models.UpThreadLikesData(tUuid, exist)
 	if err != nil {
@@ -73,7 +76,40 @@ func (t *ThreadService) LikeThreads(tUuid string, uuid string) (exist bool, err 
 		tx.Rollback()
 		return
 	}
-	//提交事务
-	tx.Commit()
+
+	thread, err := models.ThreadByTUUID(tUuid)
+	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
+		return
+	}
+
+	lm := models.LikeMessage{
+		TUuid: thread.TUuid,
+		Uuid:  thread.Uuid,
+		Title: thread.Title,
+		Body:  thread.Body,
+		Check: false,
+		Likes: 0,
+	}
+	//如果不存在则删除该LikeMessage
+	if !exist {
+		err = models.DeleteLikeMessage(lm)
+		if err != nil {
+			// 如果出错，回滚事务
+			tx.Rollback()
+			return false, err
+		}
+		return
+	}
+	//如果存在而且不为评论作者,则创建或者恢复该点赞消息
+	if thread.Uuid != uuid {
+		err = models.CreateLikeMessage(lm)
+		if err != nil {
+			// 如果出错，回滚事务
+			tx.Rollback()
+			return
+		}
+	}
 	return
 }

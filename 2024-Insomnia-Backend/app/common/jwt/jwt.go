@@ -41,7 +41,6 @@ func SignToken(Uuid string) (string, error) {
 func Parse(tokenString string) (jwt.MapClaims, error) {
 	config := LoadConfig() // 加载应用程序配置信息
 	secretKey := config.JWT.JWTSecretKey
-	fmt.Println(tokenString)
 	// 解析JWT令牌
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// 验证签名方法

@@ -56,6 +56,16 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//创建点赞消息数据库
+	err = Db.AutoMigrate(&LikeMessage{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	//创建评论消息数据库
+	err = Db.AutoMigrate(&PostMessage{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	// 创建点赞数据库表
 	err = Db.AutoMigrate(&Likes{})
 	if err != nil {

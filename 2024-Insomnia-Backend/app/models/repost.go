@@ -8,9 +8,9 @@ import (
 
 type RePost struct {
 	gorm.Model
-	TUuid string `gorm:"size:64;not null;unique"`
-	Uuid  string `gorm:"size:64;not null;unique"`
-	PUuid string `gorm:"size:64;not null;unique"`
+	TUuid string `gorm:"size:64;not null"`
+	Uuid  string `gorm:"size:64;not null"`
+	PUuid string `gorm:"size:64;not null"`
 	RUuid string `gorm:"size:64;not null;unique"`
 	Body  string `gorm:"not null"`
 	Likes uint
@@ -37,8 +37,23 @@ func CreateRePost(UuID string, crp request.CreateRePostReq) (repost RePost, err 
 }
 
 // DestroyRePost 删除指定的re回复
-func DestroyRePost(rUuid string) error {
-	return Db.Table("repost").Where("r_uuid = ? ", rUuid).Delete(&RePost{}).Error
+func DestroyRePost(rUuid string) (err error) {
+	// 开始事务
+	tx := Db.Begin()
+	err = Db.Table("re_posts").Where("r_uuid = ? ", rUuid).Delete(&RePost{}).Error
+	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
+		return
+	}
+	err = DestroyMessageByRUuId(rUuid)
+	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
+	return
 }
 
 // RePostByRUUID 用于根据回复的RUuid查询帖子记录
@@ -68,6 +83,18 @@ func RepostByUuId(UuId string) (reposts []RePost, err error) {
 		err = result.Error
 		return
 	}
+	return
+}
+
+// AuthorByRUUID 获取当前帖子的作者是谁
+func AuthorByRUUID(rUuid string) (author string, err error) {
+	repost := RePost{}
+	result := Db.Where("r_uuid = ?", rUuid).First(&repost)
+	if result.Error != nil {
+		err = result.Error
+		return
+	}
+	author = repost.Uuid
 	return
 }
 

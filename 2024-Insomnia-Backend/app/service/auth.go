@@ -120,7 +120,7 @@ func (a *AuthService) GetMyData(Uuid string) (mm GetMyDataResponse, err error) {
 	}
 	for _, t := range threads {
 		likes += t.Likes
-		getPosts += t.PostNumber
+		getPosts += t.Number
 	}
 
 	posts, err := models.PostByUuId(Uuid)
@@ -129,7 +129,7 @@ func (a *AuthService) GetMyData(Uuid string) (mm GetMyDataResponse, err error) {
 	}
 	for _, t := range threads {
 		likes += t.Likes
-		getPosts += t.PostNumber
+		getPosts += t.Number
 	}
 
 	reposts, err := models.RepostByUuId(Uuid)

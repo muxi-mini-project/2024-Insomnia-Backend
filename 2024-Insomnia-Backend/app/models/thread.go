@@ -10,14 +10,14 @@ import (
 
 type Thread struct {
 	gorm.Model
-	TUuid      string `gorm:"size:64;not null;unique"`
-	Topic      string `gorm:"not null"`
-	Title      string `gorm:"size:64;not null;"`
-	Uuid       string `gorm:"not null"`
-	Likes      uint
-	Body       string `gorm:"not null"`
-	PostNumber uint
-	Images     string `gorm:"type:json"`
+	TUuid  string `gorm:"size:64;not null;unique"`
+	Topic  string `gorm:"not null"`
+	Title  string `gorm:"size:64;not null;"`
+	Uuid   string `gorm:"not null"`
+	Likes  uint
+	Body   string `gorm:"not null"`
+	Number uint
+	Images string `gorm:"type:json"`
 }
 
 // CreateThread 方法创建一个新的帖子
@@ -29,15 +29,15 @@ func CreateThread(UuiD string, ct request.CreateThreadReq) (thread Thread, err e
 		log.Fatal("序列化数据失败:", err)
 	}
 	thread = Thread{
-		Model:      gorm.Model{},
-		TUuid:      tUuid,
-		Topic:      ct.Topic,
-		Uuid:       UuiD,
-		Body:       ct.Body,
-		Likes:      0,
-		PostNumber: 0,
-		Title:      ct.Title,
-		Images:     string(jsonData),
+		Model:  gorm.Model{},
+		TUuid:  tUuid,
+		Topic:  ct.Topic,
+		Uuid:   UuiD,
+		Body:   ct.Body,
+		Likes:  0,
+		Number: 0,
+		Title:  ct.Title,
+		Images: string(jsonData),
 	}
 	result := Db.Create(&thread)
 	if result.Error != nil {
@@ -49,15 +49,33 @@ func CreateThread(UuiD string, ct request.CreateThreadReq) (thread Thread, err e
 
 // DestroyThread 删除指定的帖子
 func DestroyThread(tUuid string) (err error) {
+	// 开始事务
+	tx := Db.Begin()
 	err = Db.Table("threads").Where("t_uuid = ? ", tUuid).Delete(&Thread{}).Error
 	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
 		return
 	}
-	err = Db.Table("posts").Where("t_uuid = ? ", tUuid).Delete(&Thread{}).Error
+	err = Db.Table("posts").Where("t_uuid = ? ", tUuid).Delete(&Post{}).Error
 	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
 		return
 	}
-	err = Db.Table("re_posts").Where("t_uuid = ? ", tUuid).Delete(&Thread{}).Error
+	err = Db.Table("re_posts").Where("t_uuid = ? ", tUuid).Delete(&RePost{}).Error
+	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
+		return
+	}
+	err = DestroyMessageByTUuId(tUuid)
+	if err != nil {
+		// 如果出错，回滚事务
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
 	return
 }
 
@@ -100,6 +118,18 @@ func ThreadByTUUID(tUuid string) (thread Thread, err error) {
 	return
 }
 
+// AuthorByTUUID 获取当前帖子的作者是谁
+func AuthorByTUUID(tUuid string) (author string, err error) {
+	thread := Thread{}
+	result := Db.Where("t_uuid = ?", tUuid).First(&thread)
+	if result.Error != nil {
+		err = result.Error
+		return
+	}
+	author = thread.Uuid
+	return
+}
+
 // ThreadByUuId 用于根据用户的UuId 查询帖子记录
 func ThreadByUuId(UuId string) (threads []Thread, err error) {
 	result := Db.Where("uuid = ?", UuId).First(&threads)
@@ -122,5 +152,26 @@ func UpThreadLikesData(tUuid string, exist bool) error {
 		return Db.Save(&thread).Error
 	}
 	thread.Likes--
+	return Db.Save(&thread).Error
+}
+
+func UpThreadNumbers(tUuid string) error {
+	var thread Thread
+	result := Db.Where("t_uuid = ?", tUuid).First(&thread)
+	if result.Error != nil {
+		err := result.Error
+		return err
+	}
+	thread.Number++
+	return Db.Save(&thread).Error
+}
+func DownThreadNumbers(tUuid string) error {
+	var thread Thread
+	result := Db.Where("t_uuid = ?", tUuid).First(&thread)
+	if result.Error != nil {
+		err := result.Error
+		return err
+	}
+	thread.Number--
 	return Db.Save(&thread).Error
 }

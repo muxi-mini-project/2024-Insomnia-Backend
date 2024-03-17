@@ -11,7 +11,7 @@ type SignupReq struct {
 	Email            string `json:"email" form:"email" binding:"required"`
 	Password         string `json:"password" form:"password" binding:"required,min=6"`
 	VerificationCode string `json:"verificationCode" form:"verificationCode" binding:"required,alphanum"`
-	Avatar           string `json:"avatar" form:"avatar" binding:"required"`
+	Avatar           string `json:"avatar" form:"avatar" binding:""`
 }
 
 // ChangePasswordReq 更换密码的请求

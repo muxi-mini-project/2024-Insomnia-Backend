@@ -3,8 +3,8 @@ package controller
 import (
 	"Insomnia/app/common/tool"
 	. "Insomnia/app/core/helper"
-	"Insomnia/app/request"
-	"Insomnia/app/response"
+	. "Insomnia/app/request"
+	. "Insomnia/app/response"
 	"Insomnia/app/service"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -23,15 +23,17 @@ var authService *service.AuthService
 // @Param email body string true "邮箱"
 // @Param password body string true "密码"
 // @Success 200 {object} LoginResponse "登录成功"
-// @Failure 400 {object} string "请求参数错误"
-// @Failure 500 {object} string "内部错误"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/auth/login [post]
 func (a *Auth) Login(c *gin.Context) {
 	//定义一个Login请求类型的结构体
-	req := &request.LoginReq{}
+	req := &LoginReq{}
 
 	//使用ShouldBind去解析获得的结构体,蛙趣真清晰啊
 	if err := c.ShouldBind(req); err != nil {
-		response.FailMsg(c, fmt.Sprintf("params invalid error: %v", err))
+		Danger(err, "解析请求结构体失败")
+		FailMsgData(c, fmt.Sprintf("params invalid error: %v", err), LoginResponse{})
 		return
 	}
 
@@ -39,12 +41,12 @@ func (a *Auth) Login(c *gin.Context) {
 	token, err := authService.Login(req.Email, tool.Encrypt(req.Password))
 	if err != nil {
 		Danger(err, "获取token失败")
-		response.FailMsg(c, fmt.Sprintf("获取token失败: %v", err))
+		FailMsgData(c, fmt.Sprintf("获取token失败: %v", err), LoginResponse{})
 		return
 	}
 
 	//返回消息捏
-	response.OkMsgData(c, "登录成功", response.LoginResponse{Token: token})
+	OkMsgData(c, "登录成功", LoginResponse{Token: token})
 }
 
 // Signup 用户注册
@@ -56,18 +58,19 @@ func (a *Auth) Login(c *gin.Context) {
 // @Param email body string true "邮箱"
 // @Param password body string true "密码"
 // @Param verificationCode body string true "验证码"
-// @Param sex body int true "性别"
-// @Success 200 {object} string "注册成功"
-// @Failure 400 {object} string "请求参数错误"
-// @Failure 500 {object} string "内部错误"
+// @Param avatar body string true "头像"
+// @Success 200 {object} LoginResponse "登录成功"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/auth/signup [post]
 func (a *Auth) Signup(c *gin.Context) {
 	//定义一个Login请求类型的结构体
-	sur := &request.SignupReq{}
+	sur := &SignupReq{}
 
 	//使用ShouldBind去解析获得的结构体,蛙趣真清晰啊
 	if err := c.ShouldBind(sur); err != nil {
 		Danger(err, "无法解析的表单")
-		response.FailMsg(c, fmt.Sprintf("无法解析: %v", err))
+		FailMsg(c, fmt.Sprintf("无法解析: %v", err))
 		return
 	}
 
@@ -75,12 +78,12 @@ func (a *Auth) Signup(c *gin.Context) {
 	err := authService.Signup(*sur)
 	if err != nil {
 		Danger(err, "注册时服务器发生错误")
-		response.FailMsg(c, fmt.Sprintf("注册时服务器发生错误: %v", err))
+		FailMsg(c, fmt.Sprintf("注册时服务器发生错误: %v", err))
 		return
 	}
 
 	//返回消息捏
-	response.OkMsg(c, "注册成功!")
+	OkMsg(c, "注册成功!")
 }
 
 // ChangePassword 更改密码
@@ -91,18 +94,20 @@ func (a *Auth) Signup(c *gin.Context) {
 // @Produce json
 // @Param email body string true "邮箱"
 // @Param verificationCode body string true "验证码"
+// @Param Authorization header string true "jwt验证"
 // @Param newPassword body string true "新密码"
 // @Success 200 {object} string "密码更改成功"
-// @Failure 400 {object} string "请求参数错误"
-// @Failure 500 {object} string "内部错误"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/auth/changePassword [post]
 func (a *Auth) ChangePassword(c *gin.Context) {
 	//定义一个Login请求类型的结构体
-	cp := &request.ChangePasswordReq{}
+	cp := &ChangePasswordReq{}
 
 	//使用ShouldBind去解析获得的结构体,蛙趣真清晰啊
 	if err := c.ShouldBind(cp); err != nil {
 		Danger(err, "无法解析的表单")
-		response.FailMsg(c, fmt.Sprintf("无法解析: %v", err))
+		FailMsg(c, fmt.Sprintf("无法解析: %v", err))
 		return
 	}
 
@@ -110,12 +115,12 @@ func (a *Auth) ChangePassword(c *gin.Context) {
 	err := authService.ChangePassword(*cp)
 	if err != nil {
 		Danger(err, "更新密码失败")
-		response.FailMsg(c, fmt.Sprintf("更新密码失败: %v", err))
+		FailMsg(c, fmt.Sprintf("更新密码失败: %v", err))
 		return
 	}
 
 	//返回消息捏
-	response.OkMsg(c, "更改密码成功!")
+	OkMsg(c, "更改密码成功!")
 }
 
 // ChangeAvatar 更改头像
@@ -124,19 +129,20 @@ func (a *Auth) ChangePassword(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param sex body int true "头像"
-// @Param Uuid header string true "用户唯一标识" default(uuid)
+// @Param newAvatar body string true "新头像"
+// @Param Authorization header string true "jwt验证"
 // @Success 200 {object} string "头像更改成功"
 // @Failure 400 {object} string "请求参数错误"
 // @Failure 500 {object} string "内部错误"
+// @Router /api/v1/auth/changeAvatar [post]
 func (a *Auth) ChangeAvatar(c *gin.Context) {
 	//定义一个Login请求类型的结构体
-	cs := &request.ChangeAvatarReq{}
+	cs := &ChangeAvatarReq{}
 
 	//使用ShouldBind去解析获得的结构体,蛙趣真清晰啊
 	if err := c.ShouldBind(cs); err != nil {
 		Danger(err, "无法解析的表单")
-		response.FailMsg(c, fmt.Sprintf("无法解析: %v", err))
+		FailMsg(c, fmt.Sprintf("无法解析: %v", err))
 		return
 	}
 
@@ -146,12 +152,12 @@ func (a *Auth) ChangeAvatar(c *gin.Context) {
 	err := authService.ChangeAvatar(*cs, uuid)
 	if err != nil {
 		Danger(err, "更新头像失败")
-		response.FailMsg(c, fmt.Sprintf("更新头像失败: %v", err))
+		FailMsg(c, fmt.Sprintf("更新头像失败: %v", err))
 		return
 	}
 
 	//返回消息捏
-	response.OkMsg(c, "更改头像成功!")
+	OkMsg(c, "更改头像成功!")
 }
 
 // GetMyData 获取数据
@@ -160,32 +166,20 @@ func (a *Auth) ChangeAvatar(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param Uuid header string true "用户唯一标识"
+// @Param Authorization header string true "jwt验证"
 // @Success 200 {object} GetMyDataResponse "获取数据成功"
 // @Failure 400 {object} string "请求参数错误"
 // @Failure 500 {object} string "内部错误"
+// @Router /api/v1/auth/getMyData [post]
 func (a *Auth) GetMyData(c *gin.Context) {
 	Uuid, _ := c.Get("Uuid")
 	uuid := Uuid.(string)
 	myData, err := authService.GetMyData(uuid)
 	if err != nil {
 		Danger(err, "获取用户信息失败")
-		response.FailMsgData(c, fmt.Sprintf("获取用户信息失败: %v", err), myData)
+		FailMsgData(c, fmt.Sprintf("获取用户信息失败: %v", err), myData)
 		return
 	}
-	response.OkMsgData(c, "获取用户信息成功", myData)
+	OkMsgData(c, "获取用户信息成功", myData)
 	return
 }
-
-//func (a *Auth) MyMessage(c *gin.Context) {
-//	Uuid, _ := c.Get("Uuid")
-//	uuid := Uuid.(string)
-//	user, err := authService.MyMessage(uuid)
-//	if err != nil {
-//		Danger(err, "获取用户信息失败")
-//		response.FailMsgData(c, fmt.Sprintf("获取用户信息失败: %v", err), user)
-//		return
-//	}
-//	response.OkMsgData(c, "获取用户信息成功", user)
-//	return
-//}

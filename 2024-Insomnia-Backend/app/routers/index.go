@@ -7,13 +7,14 @@ import (
 
 type router struct {
 	*gin.RouterGroup
-	auth   *controller.Auth
-	task   *controller.Task
-	thread *controller.Thread
-	email  *controller.SendEmail
-	tube   *controller.Tube
-	post   *controller.Post
-	repost *controller.RePost
+	auth      *controller.Auth
+	task      *controller.Task
+	thread    *controller.Thread
+	email     *controller.SendEmail
+	tube      *controller.Tube
+	post      *controller.Post
+	repost    *controller.RePost
+	myMessage *controller.MyMessage
 }
 
 func Load(e *gin.Engine) {
@@ -25,6 +26,7 @@ func Load(e *gin.Engine) {
 		tube:        &controller.Tube{},
 		post:        &controller.Post{},
 		repost:      &controller.RePost{},
+		myMessage:   &controller.MyMessage{},
 	}
 	r.RouterGroup = r.Group("/api/v1")
 	//启用认证的路由
@@ -39,4 +41,6 @@ func Load(e *gin.Engine) {
 	r.useRePost()
 	//启动通用的路由
 	r.useCommon()
+	//启动消息的路由
+	r.useMyMessage()
 }

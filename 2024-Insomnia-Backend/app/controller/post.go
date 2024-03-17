@@ -36,6 +36,7 @@ func (p *Post) CreatePost(c *gin.Context) {
 		CreatedAt: post.CreatedAt.Format("2006-01-02 15:04"),
 		TUuid:     post.TUuid,
 		UuId:      post.Uuid,
+		PUuid:     post.PUuid,
 		Likes:     post.Likes,
 		Body:      post.Body,
 	}
@@ -60,7 +61,9 @@ func (p *Post) ReadPost(c *gin.Context) {
 	}
 
 	//获取点赞状态
-	exist, err := models.CheckLike(post.PUuid, post.Uuid)
+	Uuid, _ := c.Get("Uuid")
+	uuid := Uuid.(string)
+	exist, err := models.CheckLike(post.PUuid, uuid)
 	if err != nil {
 		return
 	}
@@ -69,6 +72,7 @@ func (p *Post) ReadPost(c *gin.Context) {
 		CreatedAt: post.CreatedAt.Format("2006-01-02 15:04"),
 		TUuid:     post.TUuid,
 		UuId:      post.Uuid,
+		PUuid:     post.PUuid,
 		Likes:     post.Likes,
 		Body:      post.Body,
 		Exist:     strconv.FormatBool(exist),
@@ -121,6 +125,7 @@ func (p *Post) GetPosts(c *gin.Context) {
 			CreatedAt: post.CreatedAt.Format("2006-01-02 15:04"),
 			TUuid:     post.TUuid,
 			UuId:      post.Uuid,
+			PUuid:     post.PUuid,
 			Likes:     post.Likes,
 			Body:      post.Body,
 		}
@@ -150,6 +155,6 @@ func (p *Post) LikePost(c *gin.Context) {
 		return
 	}
 
-	response.FailMsgData(c, fmt.Sprintf("点赞状态切换成功!"), response.LikesResponse{Exist: strconv.FormatBool(exist)})
+	response.OkMsgData(c, fmt.Sprintf("点赞状态切换成功!"), response.LikesResponse{Exist: strconv.FormatBool(exist)})
 	return
 }

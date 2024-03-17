@@ -9,7 +9,7 @@ import (
 
 type TaskService struct{}
 
-// UpTask /POST /task/upTask
+// UpTask /POST /task1/upTask
 // 更新任务数据
 func (t *TaskService) UpTask(uuid string) (err error) {
 
@@ -28,7 +28,7 @@ func (t *TaskService) UpTask(uuid string) (err error) {
 	return nil
 }
 
-// GetTask /GET /task/getTask
+// GetTask /GET /task1/getTask
 // 获取本日任务数据
 func (t *TaskService) GetTask(uuid string) (error, models.Task) {
 
@@ -44,7 +44,7 @@ func (t *TaskService) GetTask(uuid string) (error, models.Task) {
 	return nil, task
 }
 
-// GetAllTask /GET /task/getAllTask
+// GetAllTask /GET /task1/getAllTask
 // 获取本周的数据
 func (t *TaskService) GetAllTask(uuid string) (error, []response.GetAllTaskResponse) {
 	//删除用户所有这周之前的任务数据

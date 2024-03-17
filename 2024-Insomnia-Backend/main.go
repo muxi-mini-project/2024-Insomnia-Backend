@@ -27,7 +27,7 @@ func main() {
 	//加载中间件
 	middlewares.Load(engine)
 
-	if err := engine.Run(":8080"); err != nil {
+	if err := engine.Run("localhost:8080"); err != nil {
 		log.Fatal(err)
 	}
 }

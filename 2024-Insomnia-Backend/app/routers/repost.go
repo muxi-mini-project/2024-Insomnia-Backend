@@ -9,5 +9,5 @@ func (r *router) useRePost() {
 	rePostRouter.POST("/destroyRePost", middlewares.UseJwt(), r.repost.DestroyRePost)
 	rePostRouter.POST("/readRePost", middlewares.UseJwt(), r.repost.ReadRePost)
 	rePostRouter.POST("/getRePosts", middlewares.UseJwt(), r.repost.GetRePosts)
-	rePostRouter.POST("/likeRePosts", middlewares.UseJwt(), r.repost.LikePost)
+	rePostRouter.POST("/likeRePost", middlewares.UseJwt(), r.repost.LikeRePost)
 }
