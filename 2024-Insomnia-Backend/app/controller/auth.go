@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"Insomnia/app/common/tool"
-	. "Insomnia/app/core/helper"
-	. "Insomnia/app/request"
-	. "Insomnia/app/response"
+	. "Insomnia/app/api/request"
+	. "Insomnia/app/api/response"
+	. "Insomnia/app/infrastructure/helper"
 	"Insomnia/app/service"
+	"Insomnia/app/utility/tool"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -20,8 +20,8 @@ var authService *service.AuthService
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param email body string true "邮箱"
-// @Param password body string true "密码"
+// @Param email query string true "邮箱"
+// @Param password query string true "密码"
 // @Success 200 {object} LoginResponse "登录成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "内部错误"
@@ -55,10 +55,10 @@ func (a *Auth) Login(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param email body string true "邮箱"
-// @Param password body string true "密码"
-// @Param verificationCode body string true "验证码"
-// @Param avatar body string true "头像"
+// @Param email query string true "邮箱"
+// @Param password query string true "密码"
+// @Param verificationCode query string true "验证码"
+// @Param avatar query string false "头像"
 // @Success 200 {object} LoginResponse "登录成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "内部错误"
@@ -92,10 +92,10 @@ func (a *Auth) Signup(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param email body string true "邮箱"
-// @Param verificationCode body string true "验证码"
+// @Param email query string true "邮箱"
+// @Param verificationCode query string true "验证码"
 // @Param Authorization header string true "jwt验证"
-// @Param newPassword body string true "新密码"
+// @Param newPassword query string true "新密码"
 // @Success 200 {object} string "密码更改成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "内部错误"
@@ -129,7 +129,7 @@ func (a *Auth) ChangePassword(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param newAvatar body string true "新头像"
+// @Param newAvatar query string true "新头像"
 // @Param Authorization header string true "jwt验证"
 // @Success 200 {object} string "头像更改成功"
 // @Failure 400 {object} string "请求参数错误"

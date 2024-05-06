@@ -1,9 +1,9 @@
 package controller
 
 import (
-	. "Insomnia/app/core/helper"
-	. "Insomnia/app/request"
-	. "Insomnia/app/response"
+	. "Insomnia/app/api/request"
+	. "Insomnia/app/api/response"
+	. "Insomnia/app/infrastructure/helper"
 	"Insomnia/app/service"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -14,6 +14,17 @@ type MyMessage struct{}
 
 var myMessageService *service.MyMessageService
 
+// GetPostMessage 获取用户的评论消息
+// @Summary 获取用户的评论消息接口
+// @Description 获取用户的评论消息接口
+// @Tags MyMessage
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "jwt验证"
+// @Success 200 {object} MessageResponse "获取消息成功"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/myMessage/getPostMessage [post]
 func (m *MyMessage) GetPostMessage(c *gin.Context) {
 	Uuid, _ := c.Get("Uuid")
 	uuid := Uuid.(string)
@@ -36,6 +47,18 @@ func (m *MyMessage) GetPostMessage(c *gin.Context) {
 	OkMsgData(c, "获取评论信息成功", rsp)
 }
 
+// CheckPostMessage 查看用户的评论消息
+// @Summary 查看用户的评论消息接口
+// @Description 查看用户的评论消息接口
+// @Tags MyMessage
+// @Accept json
+// @Produce json
+// @Param id query string true "返回给你的post消息的id"
+// @Param Authorization header string true "jwt验证"
+// @Success 200 {object} MessageResponse "查看消息成功"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/myMessage/checkPostMessage [post]
 func (m *MyMessage) CheckPostMessage(c *gin.Context) {
 	//定义一个Login请求类型的结构体
 	req := &CheckPostMessageReq{}
@@ -53,6 +76,17 @@ func (m *MyMessage) CheckPostMessage(c *gin.Context) {
 	OkMsg(c, "检查消息成功")
 }
 
+// GetLikeMessage 获取用户的点赞消息
+// @Summary 获取用户的点赞消息接口
+// @Description 获取用户的点赞消息接口
+// @Tags MyMessage
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "jwt验证"
+// @Success 200 {object} MessageResponse "获取帖子成功"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/myMessage/getLikeMessage [post]
 func (m *MyMessage) GetLikeMessage(c *gin.Context) {
 	Uuid, _ := c.Get("Uuid")
 	uuid := Uuid.(string)
@@ -78,6 +112,18 @@ func (m *MyMessage) GetLikeMessage(c *gin.Context) {
 	OkMsgData(c, "获取点赞消息成功", rsp)
 }
 
+// CheckLikeMessage 查看用户的点赞消息
+// @Summary 查看用户的点赞消息接口
+// @Description 查看用户的点赞消息接口
+// @Tags MyMessage
+// @Accept json
+// @Produce json
+// @Param id query string true "返回给你的like消息的id"
+// @Param Authorization header string true "jwt验证"
+// @Success 200 {object} MessageResponse "查看消息成功"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 500 {object} ErrorResponse "内部错误"
+// @Router /api/v1/myMessage/checkLikeMessage [post]
 func (m *MyMessage) CheckLikeMessage(c *gin.Context) {
 	//定义一个Login请求类型的结构体
 	req := &CheckLikeMessageReq{}

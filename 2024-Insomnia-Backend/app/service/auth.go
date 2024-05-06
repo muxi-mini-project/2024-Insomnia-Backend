@@ -1,11 +1,12 @@
 package service
 
 import (
-	"Insomnia/app/common/jwt"
-	"Insomnia/app/common/tool"
+	. "Insomnia/app/api/request"
+	. "Insomnia/app/api/response"
+	"Insomnia/app/infrastructure/Email"
+	"Insomnia/app/infrastructure/jwt"
 	"Insomnia/app/models"
-	. "Insomnia/app/request"
-	. "Insomnia/app/response"
+	"Insomnia/app/utility/tool"
 	"fmt"
 )
 
@@ -14,7 +15,7 @@ type AuthService struct{}
 // Signup 注册新用户
 func (a *AuthService) Signup(signup SignupReq) (err error) {
 	//获取用户信息
-	eck := models.CheckEmail{
+	eck := Email.CheckEmail{
 		Email:            signup.Email,
 		VerificationCode: signup.VerificationCode,
 	}
@@ -63,7 +64,7 @@ func (a *AuthService) Login(email string, password string) (string, error) {
 // ChangePassword 更新密码
 func (a *AuthService) ChangePassword(cp ChangePasswordReq) (err error) {
 	//获取用户信息
-	eck := models.CheckEmail{
+	eck := Email.CheckEmail{
 		Email:            cp.Email,
 		VerificationCode: cp.VerificationCode,
 	}

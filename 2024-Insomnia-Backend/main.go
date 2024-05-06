@@ -1,21 +1,15 @@
 package main
 
 import (
-	"Insomnia/app/core/middlewares"
-	"Insomnia/app/routers"
+	"Insomnia/app/api/routers"
+	"Insomnia/app/infrastructure/kafka"
+	"Insomnia/app/infrastructure/middlewares"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
-
-// 个人总数据
-type taskSumData struct {
-	gorm.Model
-	Uuid  string `gorm:"size:64;not null;unique"`
-	Email string `gorm:"size:255;not null;unique"`
-	Sum   uint
-	Tasks string
-}
 
 // @title 不眠夜
 // @version 1.0
@@ -26,8 +20,26 @@ func main() {
 	routers.Load(engine)
 	//加载中间件
 	middlewares.Load(engine)
-
-	if err := engine.Run("localhost:8080"); err != nil {
+	//加载消费者组
+	go ConsumerGroup()
+	if err := engine.Run(":8000"); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ConsumerGroup() {
+	// 创建 Kafka 实例
+	topics := []string{"cache"}
+	group := "cache-group"
+	key := "cache-key"
+	kafkaClient := kafka.NewKafka(topics, group, key)
+
+	// 创建并启动消费者组
+	closeConsumer := kafkaClient.CreateConsumerToGroup()
+	defer closeConsumer()
+
+	// 监听信号以优雅地退出程序
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+	<-sigterm
 }

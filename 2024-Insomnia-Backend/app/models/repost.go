@@ -1,8 +1,8 @@
 package models
 
 import (
-	. "Insomnia/app/common/tool"
-	"Insomnia/app/request"
+	"Insomnia/app/api/request"
+	. "Insomnia/app/utility/tool"
 	"gorm.io/gorm"
 )
 
