@@ -1,19 +1,23 @@
 package controller
 
 import (
+	. "Insomnia/app/api/request"
+	. "Insomnia/app/api/response"
+	"Insomnia/app/infrastructure/kafka"
+	"Insomnia/app/infrastructure/redis"
 	"Insomnia/app/models"
-	. "Insomnia/app/request"
-	. "Insomnia/app/response"
 	"Insomnia/app/service"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"strconv"
+	"sync"
 )
 
 type Thread struct{}
 
+var lock sync.Mutex
 var threadService *service.ThreadService
 
 // CreateThread 创建帖子
@@ -22,10 +26,10 @@ var threadService *service.ThreadService
 // @Tags Thread
 // @Accept json
 // @Produce json
-// @Param title body string true "标题"
-// @Param topic body string true "主题"
-// @Param body body string true "内容"
-// @Param images body []string true "图片链接列表"
+// @Param title query string true "标题"
+// @Param topic query string true "主题"
+// @Param body query string true "内容"
+// @Param images query []string true "图片链接列表"
 // @Param Authorization header string true "jwt验证"
 // @Success 200 {object} GetThreadResponse "帖子创建成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
@@ -65,7 +69,7 @@ func (t *Thread) CreateThread(c *gin.Context) {
 		Number:    thread.Number,
 		Images:    retrievedSlice,
 	}
-	FailMsgData(c, "创建帖子成功", rsp)
+	OkMsgData(c, "创建帖子成功", rsp)
 	return
 }
 
@@ -75,7 +79,7 @@ func (t *Thread) CreateThread(c *gin.Context) {
 // @Tags Thread
 // @Accept json
 // @Produce json
-// @Param tUuid body string true "帖子唯一标识"
+// @Param tUuid query string true "帖子唯一标识"
 // @Param Authorization header string true "jwt验证"
 // @Success 200 {object} GetThreadResponse "获取帖子成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
@@ -123,6 +127,7 @@ func (t *Thread) ReadThread(c *gin.Context) {
 		Images:    retrievedSlice,
 		Exist:     strconv.FormatBool(exist),
 	}
+
 	OkMsgData(c, "获取帖子成功", rsp)
 	return
 }
@@ -133,7 +138,7 @@ func (t *Thread) ReadThread(c *gin.Context) {
 // @Tags Thread
 // @Accept json
 // @Produce json
-// @Param tUuid body string true "帖子唯一标识"
+// @Param tUuid query string true "帖子唯一标识"
 // @Param Authorization header string true "jwt验证"
 // @Success 200 {string} string "删除帖子成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
@@ -165,14 +170,13 @@ func (t *Thread) DestroyThread(c *gin.Context) {
 // @Tags Thread
 // @Accept json
 // @Produce json
-// @Param topic body string true "主题"
+// @Param topic query string true "主题"
 // @Param Authorization header string true "jwt验证"
 // @Success 200 {object} []GetThreadResponse "获取帖子成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
 // @Failure 500 {object} ErrorResponse "内部错误"
 // @Router /api/v1/thread/getThreads [post]
 func (t *Thread) GetThreads(c *gin.Context) {
-
 	//定义一个获取帖子请求的结构体
 	req := &GetThreadsReq{}
 
@@ -190,7 +194,7 @@ func (t *Thread) GetThreads(c *gin.Context) {
 	}
 
 	var rsp []GetThreadResponse
-	for _, thread := range threads {
+	for i, thread := range threads {
 		threads := GetThreadResponse{
 			CreatedAt: thread.CreatedAt.Format("2006-01-02 15:04"),
 			TUuid:     thread.TUuid,
@@ -201,10 +205,26 @@ func (t *Thread) GetThreads(c *gin.Context) {
 			Body:      thread.Body,
 			Number:    thread.Number,
 		}
+
+		//存储前10个帖子的回复到缓存
+		if i < 10 {
+			go func() {
+				owner := thread.TUuid
+				exist, err := redis.ExistResp("posts" + owner)
+				if exist != 1 && err == nil {
+					// 创建 Kafka 实例
+					topics := []string{"cache"}
+					group := "cache-group"
+					key := "posts"
+					k := kafka.NewKafka(topics, group, key)
+					k.CreateCacheProducer(owner)
+				}
+			}()
+		}
 		rsp = append(rsp, threads)
 	}
 
-	FailMsgData(c, "获取帖子成功", rsp)
+	OkMsgData(c, "获取帖子成功", rsp)
 	return
 }
 
@@ -245,7 +265,7 @@ func (t *Thread) GetMyThreads(c *gin.Context) {
 		rsp = append(rsp, threads)
 	}
 
-	FailMsgData(c, "获取帖子成功", rsp)
+	OkMsgData(c, "获取帖子成功", rsp)
 	return
 }
 
@@ -255,7 +275,7 @@ func (t *Thread) GetMyThreads(c *gin.Context) {
 // @Tags Thread
 // @Accept json
 // @Produce json
-// @Param uid body string true "这里对应的就是tUuid,但是方便你复制粘贴,帖子唯一标识"
+// @Param uid query string true "这里对应的就是tUuid,但是方便你复制粘贴,帖子唯一标识"
 // @Param Authorization header string true "jwt验证"
 // @Success 200 {object} LikesResponse "点赞状态切换成功"
 // @Failure 400 {object} ErrorResponse "请求参数错误"
@@ -280,6 +300,6 @@ func (t *Thread) LikeThread(c *gin.Context) {
 		return
 	}
 
-	FailMsgData(c, fmt.Sprintf("点赞状态切换成功!"), LikesResponse{Exist: strconv.FormatBool(exist)})
+	OkMsgData(c, fmt.Sprintf("点赞状态切换成功!"), LikesResponse{Exist: strconv.FormatBool(exist)})
 	return
 }

@@ -1,12 +1,12 @@
 package controller
 
 import (
-	. "Insomnia/app/common/tool"
-	. "Insomnia/app/core/config"
-	. "Insomnia/app/core/helper"
-	"Insomnia/app/models"
-	. "Insomnia/app/request"
-	. "Insomnia/app/response"
+	. "Insomnia/app/api/request"
+	. "Insomnia/app/api/response"
+	. "Insomnia/app/infrastructure/Email"
+	. "Insomnia/app/infrastructure/config"
+	. "Insomnia/app/infrastructure/helper"
+	. "Insomnia/app/utility/tool"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jordan-wright/email"
@@ -23,7 +23,7 @@ type SendEmail struct{}
 // @Accept json
 // @Produce json
 // @version 1.0
-// @Param email body SendEmailRequest true "邮箱"
+// @Param email query SendEmailRequest true "邮箱"
 // @Success 200 {string} string "发送邮件成功"
 // @Failure 404 {string} string "邮箱服务器出错"
 // @Failure 500 {string} string "发送邮件失败"
@@ -52,7 +52,7 @@ func (e *SendEmail) SendEmail(c *gin.Context) {
 		return
 	}
 	//创造一个临时的CheckEmail
-	Email := models.CheckEmail{
+	Email := CheckEmail{
 		Email:            cp.Email,
 		VerificationCode: random,
 	}

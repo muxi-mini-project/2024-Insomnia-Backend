@@ -1,8 +1,8 @@
 package service
 
 import (
+	. "Insomnia/app/api/request"
 	"Insomnia/app/models"
-	. "Insomnia/app/request"
 )
 
 type MyMessageService struct{}

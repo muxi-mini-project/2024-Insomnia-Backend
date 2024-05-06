@@ -1,8 +1,8 @@
 package models
 
 import (
-	"Insomnia/app/common/tube"
-	. "Insomnia/app/core/config"
+	. "Insomnia/app/infrastructure/config"
+	"Insomnia/app/utility/tube"
 	"fmt"
 	"gorm.io/driver/mysql"
 	_ "gorm.io/driver/mysql"

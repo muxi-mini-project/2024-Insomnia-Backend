@@ -1,17 +1,17 @@
 package controller
 
 import (
-	"Insomnia/app/common/tube"
-	"Insomnia/app/response"
+	"Insomnia/app/api/response"
+	"Insomnia/app/utility/tube"
 	"github.com/gin-gonic/gin"
 )
 
 type Tube struct{}
 type Token struct {
-	token string
+	Token string `json:"token"`
 }
 
 func (t *Tube) GetQNToken(c *gin.Context) {
-	response.OkData(c, Token{tube.GetQNToken()})
+	response.OkMsgData(c, "获取token成功", Token{Token: tube.GetQNToken()})
 	return
 }
